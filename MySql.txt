@@ -1,0 +1,203 @@
+#####Creamos la base de datos para nuestro modelo entidad relación
+CREATE DATABASE IF NOT EXISTS tf_bd2_entidadR;
+
+#Seleccionar la base de datos
+USE tf_bd2_entidadR;
+
+#Creamos las tabla Universidad
+CREATE TABLE IF NOT EXISTS Universidad(
+	Nombre_Universidad varchar(100) NOT NULL,
+    Distrito varchar(50),
+    Provincia varchar(50),
+    Departamento varchar(50),
+    Gestión ENUM("Público","Privado"),
+    PRIMARY	KEY(Nombre_Universidad)
+    )ENGINE=INNODB;
+
+#Creamos las tabla Estudiante
+CREATE TABLE IF NOT EXISTS Estudiante(
+    DNI_Estudiante INT NOT NULL,
+    Nombre_Universidad varchar(100) not null,
+    constraint Fk_Unversidad
+    foreign key(Nombre_Universidad)
+    references Universidad(Nombre_Universidad),
+    Edad int,
+    Sexo_Estudiante ENUM("Masculino","Femenino"),
+    Clase_Económica ENUM("A","B","C","D","E"),
+    Situación_Laboral ENUM("Sólo estudia","Estudia y trabaja"),
+    PRIMARY KEY(DNI_Estudiante)
+)ENGINE=INNODB;
+
+#Creamos las tabla Año-cursado
+CREATE TABLE IF NOT EXISTS Año_cursado(
+	Año INT NOT NULL,
+    Matriculados_Por_Año int,
+    PRIMARY	KEY(Año)
+)ENGINE=INNODB;
+
+#Creamos las tabla Año_cursado_Estudiante
+CREATE TABLE IF NOT EXISTS Año_cursado_Estudiante(
+    Año int not null,
+    constraint Fk_Año_cursado
+    foreign key(Año)
+    references Año_cursado(Año),
+    DNI_Estudiante int not null,
+    constraint Fk_Estudiante
+    foreign key(DNI_Estudiante)
+    references Estudiante(DNI_Estudiante),
+    Promedio_Estudiante numeric (3,1),
+    Situación_Académica ENUM("Normal","Observado", "Suspendido"),
+    PRIMARY	KEY(Año, DNI_Estudiante)
+)ENGINE=INNODB;
+
+#Creamos las tabla Año_cursado_Universidad
+CREATE TABLE IF NOT EXISTS Año_cursado_Universidad(
+    Año int not null,
+    constraint Fk_Año_cursado2
+    foreign key(Año)
+    references Año_cursado(Año),
+    Nombre_Universidad varchar(100) NOT NULL,
+    constraint Fk_Universidad2
+    foreign key(Nombre_Universidad)
+    references Universidad(Nombre_Universidad),
+    Cantidad_Profesores_Contratados int,
+    Matriculados_en_el_año int,
+    Tipo_Modalidad ENUM("Semi-presencial","Virtual"),
+    PRIMARY	KEY(Año, Nombre_Universidad)
+)ENGINE=INNODB;
+
+##Ahora subimos los datos
+#Cargamos para universidad
+Load data infile 'C:\\Users\\Asus\\Desktop\\universidades.csv'
+into table universidad
+CHARACTER SET UTF8
+fields terminated by ';'
+optionally enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+
+#Cargamos para año_cursado
+Load data infile 'C:\\Users\\Asus\\Desktop\\years.csv'
+into table año_cursado
+CHARACTER SET UTF8
+fields terminated by ';'
+optionally enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+
+#Cargamos para año_cursado_universidad
+Load data infile 'C:\\Users\\Asus\\Desktop\\year_universidad.csv'
+into table año_cursado_universidad
+CHARACTER SET UTF8
+fields terminated by ';'
+optionally enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+
+#Cargamos para estudiante
+SET FOREIGN_KEY_CHECKS=0;
+Load data infile 'C:\\Users\\Asus\\Desktop\\estudiantes.csv'
+into table estudiante
+CHARACTER SET UTF8
+fields terminated by ';'
+optionally enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+
+#Cargamos para año_cursado_estudiante
+SET FOREIGN_KEY_CHECKS=0;
+Load data infile 'C:\\Users\\Asus\\Desktop\\year_estudiantes.csv'
+into table año_cursado_estudiante
+CHARACTER SET UTF8
+fields terminated by ';'
+optionally enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+SET FOREIGN_KEY_CHECKS=1;
+
+#####Creamos la base de datos para nuestro modelo estrella
+
+#Creamos la base de datos para nuestro modelo estrella
+CREATE DATABASE IF NOT EXISTS tf_bd2_me;
+
+#Seleccionar la base de datos
+USE tf_bd2_me;
+
+#Creamos las tabla Universidad2
+CREATE TABLE IF NOT EXISTS Universidad2(
+	Nombre_Universidad varchar(100) NOT NULL,
+    Distrito varchar(50),
+    Provincia varchar(50),
+    PRIMARY	KEY(Nombre_Universidad)
+)ENGINE=INNODB;
+
+#Creamos las tabla Estudiante2
+CREATE TABLE IF NOT EXISTS Estudiante2(
+    DNI_Estudiante INT NOT NULL,
+    Edad int,
+    Sexo_Estudiante ENUM("Masculino","Femenino"),
+    Situación_Laboral ENUM("Sólo estudia","Estudia y trabaja"),
+    PRIMARY KEY(DNI_Estudiante)
+)ENGINE=INNODB;
+
+#Creamos las tabla Año-cursado2
+CREATE TABLE IF NOT EXISTS Año_cursado2(
+	Año INT NOT NULL,
+    PRIMARY	KEY(Año)
+)ENGINE=INNODB;
+
+#Creamos las tabla de hechos
+CREATE TABLE IF NOT EXISTS Tabla_Hechos(
+    Nombre_Universidad varchar(100) not null,
+    constraint Fk_Unversidad_hecho
+    foreign key(Nombre_Universidad)
+    references Universidad2(Nombre_Universidad),
+    Año int not null,
+    constraint Fk_año_cursado_hecho
+    foreign key(Año)
+    references año_cursado2(Año),
+    DNI_Estudiante int not null,
+    constraint Fk_Estudiante_hecho
+    foreign key(DNI_Estudiante)
+    references estudiante2(DNI_Estudiante),
+	Promedio_Estudiante numeric (3,1),
+	Situación_Académica ENUM("Normal","Observado", "Suspendido"),
+	Clase_Económica ENUM("A","B","C","D","E"),
+    Matriculados_Por_Año int,
+	Tipo_Modalidad ENUM("Semi-presencial","Virtual"),
+	Gestión ENUM("Público","Privado"),
+	Departamento varchar(50),
+    PRIMARY	KEY(DNI_Estudiante,Año,Nombre_Universidad)
+)ENGINE=INNODB;
+
+#Insertamos los datos de la base de datos tfbd2_entidadr para las entidades estudiantes2, universidad2 y año_cursado2
+#Insert para Estudiantes2
+Insert into tf_bd2_me.estudiante2
+	select	DNI_Estudiante,
+			Edad,
+			Sexo_Estudiante,
+			Situación_Laboral
+	from tf_bd2_entidadr.estudiante;
+
+#Insert para Universidad2
+Insert into tf_bd2_me.universidad2
+	select Nombre_Universidad,
+			Distrito,
+			Provincia
+	from tf_bd2_entidadr.universidad;
+    
+    #Insert para Año_cursado2
+Insert into tf_bd2_me.año_cursado2
+	select 	Año
+	from tf_bd2_entidadr.año_cursado;
+    
+#Finalmente cargamos para nuestra tabla de hechos
+SET FOREIGN_KEY_CHECKS=0;
+Load data infile 'C:\\Users\\Asus\\Desktop\\tabla_hechos.csv'
+into table Tabla_Hechos
+CHARACTER SET UTF8
+fields terminated by ';'
+optionally enclosed by '"'
+lines terminated by '\r\n'
+ignore 1 rows;
+SET FOREIGN_KEY_CHECKS=1;
